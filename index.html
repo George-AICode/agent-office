@@ -84,9 +84,17 @@ nav{display:flex;align-items:center;gap:4px;flex:none}
 #ctl #wander[aria-pressed="true"]{background:#1f7a55}
 
 #feed{position:absolute;left:12px;right:12px;bottom:12px;z-index:2;background:var(--card);border:1px solid var(--line);border-radius:14px;backdrop-filter:blur(6px);display:flex;flex-direction:column;max-height:152px}
-#feed h2{margin:0;display:flex;align-items:center;gap:9px;padding:9px 14px;font-size:11.5px;font-weight:600;letter-spacing:.09em;color:#c5cce0;border-bottom:1px solid var(--line)}
-#feed h2::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--ok)}
-#feed h2 span{margin-left:auto;font-weight:400;letter-spacing:0;color:var(--muted);font-size:12px}
+#feed h2{margin:0}
+#feedToggle{width:100%;display:flex;align-items:center;gap:9px;padding:9px 14px;background:transparent;border:0;border-bottom:1px solid var(--line);border-radius:14px 14px 0 0;font-size:11.5px;font-weight:600;letter-spacing:.09em;color:#c5cce0;text-align:left}
+#feedToggle:hover{background:rgba(255,255,255,.04)}
+#feedToggle::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--ok);flex:none}
+#feedToggle .live{margin-left:auto;font-weight:400;letter-spacing:0;color:var(--muted);font-size:12px}
+#feedToggle .new{display:none;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--accent);color:#fff;font-size:10.5px;font-weight:700;letter-spacing:0;place-items:center}
+#feedToggle svg{flex:none;color:var(--muted);transition:transform .2s}
+#feed.collapsed #feedToggle{border-bottom-color:transparent;border-radius:14px}
+#feed.collapsed #feedToggle svg{transform:rotate(-90deg)}
+#feed.collapsed #feedToggle .new.on{display:grid}
+#feed.collapsed ul{display:none}
 #feed ul{list-style:none;margin:0;padding:0;overflow-y:auto;touch-action:pan-y;min-height:0}
 #feed li{display:flex;align-items:center;gap:9px;padding:6px 14px;border-bottom:1px solid rgba(42,53,85,.6)}
 #feed li:last-child{border-bottom:0}
@@ -159,7 +167,7 @@ nav{display:flex;align-items:center;gap:4px;flex:none}
         </div>
       </div>
     </div>
-    <div id="feed"><h2>ACTIVITY <span>live</span></h2><ul id="feedList"></ul></div>
+    <div id="feed"><h2><button type="button" id="feedToggle" aria-expanded="true" aria-controls="feedList" title="Collapse or expand the activity feed">ACTIVITY<span class="new" id="feedNew" aria-label="new events">0</span><span class="live">live</span><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></h2><ul id="feedList"></ul></div>
     <div id="sheet" hidden><div class="top"><h2 id="sheetTitle">Tasks</h2><button class="x" type="button" id="sheetClose">Close</button></div><div id="sheetBody"></div></div>
     <div id="fail">This view needs WebGL, which this browser has switched off.</div>
   </section>
@@ -561,13 +569,21 @@ function command(a,cmd){
 }
 
 /* ================= Activity feed ================= */
-var feedEl=$('feedList'), feed=[], DOT={ok:'#34d399',msg:'#60a5fa'};
+var feedEl=$('feedList'), feed=[], DOT={ok:'#34d399',msg:'#60a5fa'}, feedCollapsed=false, feedUnread=0;
+function setFeedCollapsed(c){
+  feedCollapsed=c; $('feed').classList.toggle('collapsed',c); $('feedToggle').setAttribute('aria-expanded',c?'false':'true');
+  if(!c){ feedUnread=0; $('feedNew').classList.remove('on'); }
+  try{ localStorage.setItem('agentOffice.feedCollapsed',c?'1':'0'); }catch(_){}
+}
+$('feedToggle').addEventListener('click',function(){ setFeedCollapsed(!feedCollapsed); });
+try{ if(localStorage.getItem('agentOffice.feedCollapsed')==='1') setFeedCollapsed(true); }catch(_){}
 function avatar(a){ return '<svg class="av" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="#2a3352"/><path d="M4 24c0-5 3.5-8 8-8s8 3 8 8z" fill="'+a.color+'"/><circle cx="12" cy="10.5" r="4.6" fill="'+a.skin+'"/><path d="M7.2 10c0-3.4 2-5.4 4.8-5.4s4.8 2 4.8 5.4c-1.6-1.8-3-2.6-4.8-2.6S8.8 8.2 7.2 10z" fill="'+a.hair+'"/></svg>'; }
 function ago(ms){ var s=(Date.now()-ms)/1000; return s<20?'just now':(s<90?Math.round(s/10)*10+'s ago':Math.round(s/60)+'m ago'); }
 function log(a,kind,text){
   var li=document.createElement('li'); if(DOT[kind]) li.style.setProperty('--d',DOT[kind]);
   li.innerHTML=avatar(a)+'<i></i><p>'+esc(text)+'</p><time>just now</time>';
   feedEl.insertBefore(li,feedEl.firstChild); feed.unshift({li:li,at:Date.now()});
+  if(feedCollapsed){ feedUnread++; var nb=$('feedNew'); nb.textContent=feedUnread>99?'99+':feedUnread; nb.classList.add('on'); }
   while(feed.length>40){ feedEl.removeChild(feed.pop().li); }
 }
 setInterval(function(){ feed.forEach(function(f){ f.li.lastChild.textContent=ago(f.at); }); },10000);

@@ -10,7 +10,7 @@ The demo studio is **Brightframe Studio**, a content company run by six AI agent
 - **Agent states:** standby at the desk, walking, working at a station, and handing work to a teammate.
 - **Station activities:** whiteboard, edit bay, recording mic, camera set, storyboard and filing cabinets, each reacting while its agent works.
 - **Task pipeline:** plan → script → shoot → edit → dub → log costs, with handoffs between agents.
-- **Live activity feed:** new tasks, progress, handoff messages and idle updates.
+- **Live activity feed:** new tasks, progress, handoff messages and idle updates. Click the header to collapse it; a counter shows new events while it is closed.
 - **Tasks, Brain and Inbox panels:** task status, shared studio notes, and approvals waiting for you.
 - **Debug tools:** frame stats, agent commands (Coffee, Meeting, Visit, Back to desk), Wander mode and path lines. Press `D` to show or hide them.
 - **Navigation:** drag to pan, scroll or pinch to zoom, and click a department to focus on its room.
